@@ -10,7 +10,7 @@ import { AuthModule } from "./auth/auth.module";
 import { InvoiceModule } from "./invoice/invoice.module";
 import { ClientModule } from "./client/client.module";
 import { UploadModule } from "./upload/upload.module";
-import databaseConfig from "./config/database.config";
+// import databaseConfig from "./config/database.config";
 import AppDataSource from "data-source";
 
 @Module({
@@ -19,7 +19,7 @@ import AppDataSource from "data-source";
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
-      load: [databaseConfig],
+      // load: [databaseConfig],
     }),
 
     TypeOrmModule.forRoot(AppDataSource.options),
