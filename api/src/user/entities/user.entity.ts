@@ -4,7 +4,6 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
 } from "typeorm";
 
 @Entity()
@@ -59,11 +58,4 @@ export class User {
     onUpdate: "CURRENT_TIMESTAMP(6)",
   })
   updated_at: Date;
-
-  @DeleteDateColumn({
-    type: "timestamp",
-    default: () => "CURRENT_TIMESTAMP(6)",
-    onUpdate: "CURRENT_TIMESTAMP(6)",
-  })
-  deleted_at: Date;
 }

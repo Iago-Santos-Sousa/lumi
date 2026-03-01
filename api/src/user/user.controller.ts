@@ -32,7 +32,6 @@ import {
   UpdateUserByIdDocs,
   DeleteUserByIdDocs,
 } from "./user.docs";
-import { Ctx, EventPattern, Payload, RmqContext } from "@nestjs/microservices";
 
 @ApiTags("User")
 @Controller("user")
@@ -107,21 +106,5 @@ export class UserController {
     return {
       message: `User with ID ${id} was successfully removed`,
     };
-  }
-
-  @EventPattern("message")
-  messageExample(@Payload() data: any, @Ctx() context: RmqContext) {
-    /* 
-      {
-        "pattern": "message",
-        "data": "mensagem"
-      } 
-    */
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
-    console.log(`Pattern: ${context.getPattern()}`);
-    console.log(`Data: ${JSON.stringify(data)}`);
-    console.log("Canal(conexão): ", context.getChannelRef());
-    channel.ack(originalMsg);
   }
 }

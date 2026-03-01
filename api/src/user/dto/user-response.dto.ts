@@ -1,5 +1,4 @@
 import { ApiProperty, OmitType, PickType } from "@nestjs/swagger";
-import { Exclude } from "class-transformer";
 import { IsOptional } from "class-validator";
 
 export class UsersDto {
@@ -23,9 +22,6 @@ export class UsersDto {
 
   @ApiProperty({ required: false })
   updated_at?: Date;
-
-  @Exclude()
-  deleted_at?: Date;
 }
 
 export class UserCreatedResponseDto {
@@ -35,7 +31,7 @@ export class UserCreatedResponseDto {
   @ApiProperty({
     type: PickType(UsersDto, ["user_id", "name", "email", "role"] as const),
   })
-  user: Omit<UsersDto, "created_at" | "updated_at" | "deleted_at">;
+  user: Omit<UsersDto, "created_at" | "updated_at">;
 }
 
 export class UserUpdatedResponseDto extends UserCreatedResponseDto {
@@ -48,7 +44,7 @@ export class UserResponseDto {
   message?: string;
 
   @ApiProperty({
-    type: [OmitType(UsersDto, ["deleted_at"] as const)],
+    type: [OmitType(UsersDto, [] as const)],
   })
   user: UsersDto;
 
@@ -69,7 +65,7 @@ export class UsersResponseDto {
   message?: string;
 
   @ApiProperty({
-    type: [OmitType(UsersDto, ["deleted_at"] as const)],
+    type: [OmitType(UsersDto, [] as const)],
   })
   users: Partial<UsersDto>[];
 

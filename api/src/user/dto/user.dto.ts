@@ -26,9 +26,6 @@ export class UserDto {
   @ApiProperty({ example: new Date() })
   updated_at: Date;
 
-  @Exclude()
-  deleted_at: Date;
-
   constructor(partial: Partial<UserDto>) {
     Object.assign(this, partial);
   }

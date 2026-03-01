@@ -18,7 +18,7 @@ const AuthenticatedRoute = ({ children }: PropsWithChildren) => {
     if (!sessionToken || !sessionUser || !sessionRefreshToken) {
       loginAPi()
         .logOut()
-        .then((response) => {
+        .then(() => {
           sessionStorage.clear();
           return navigate("/", { replace: true });
         });

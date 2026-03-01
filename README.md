@@ -21,12 +21,12 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 
 ## Visão Geral
 
-| Serviço    | URL local                 | Descrição                      |
-| ---------- | ------------------------- | ------------------------------ |
-| Front-end  | http://localhost:3000     | Interface React                |
-| API        | http://localhost:3001/api | API REST NestJS                |
-| Swagger    | http://localhost:3001/api | Documentação interativa        |
-| PostgreSQL | localhost:5432            | Banco de dados (acesso direto) |
+| Serviço    | URL local                 | Descrição                         |
+| ---------- | ------------------------- | --------------------------------- |
+| Front-end  | http://localhost:3000     | Interface React                   |
+| API        | http://localhost:3001/api | API REST NestJS                   |
+| Swagger    | http://localhost:3001/api | Documentação interativa           |
+| PostgreSQL | interno (rede Docker)     | Acessível apenas pelos containers |
 
 ---
 
@@ -331,7 +331,7 @@ lumi/
 
 1. Acesse o front-end e faça login
 2. Navegue até **Biblioteca de Faturas**
-3. Arraste ou selecione os arquivos PDF (faturas CEMIG, até 10 por vez)
+3. Arraste ou selecione os arquivos PDF (faturas CEMIG, até 5 por vez)
 4. A API extrai os dados automaticamente (número do cliente, consumo, valores, etc.)
 5. Os dados são persistidos no banco e os PDFs salvos em `uploads/invoices/`
 6. Acesse o **Dashboard** para visualizar os gráficos de consumo e economia
@@ -342,15 +342,13 @@ lumi/
 
 ### `docker compose up` falha na conexão com o banco
 
-A API aguarda o PostgreSQL ficar saudável antes de iniciar (`healthcheck`).  
-Se o problema persistir, verifique se a porta `5432` não está ocupada por outra instância do PostgreSQL local.
+A API aguarda o PostgreSQL ficar saudável antes de iniciar (via `healthcheck`).  
+O PostgreSQL **não exposta a porta 5432 ao host**, portanto não há conflito com uma instância local já em execução.
+
+Se a API ainda falhar, verifique os logs:
 
 ```bash
-# No Linux/macOS:
-sudo lsof -i :5432
-
-# No Windows (PowerShell):
-netstat -ano | findstr :5432
+docker compose logs api
 ```
 
 ### Erro de permissão no diretório uploads
