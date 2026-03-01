@@ -30,7 +30,7 @@ COPY --from=builder /app/dist ./dist
 # (substitui o tsconfig.json padrão para que tsconfig-paths resolva corretamente)
 COPY --from=builder /app/tsconfig.production.json ./tsconfig.json
 
-# Cria o diretório de uploads (persistido via volume no docker-compose)
+# Cria o diretório/pasta de uploads (persistido via volume no docker-compose)
 RUN mkdir -p uploads/invoices
 
 ENV NODE_ENV=production
