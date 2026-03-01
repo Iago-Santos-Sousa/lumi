@@ -25,7 +25,7 @@ const CreateUser: React.FC = () => {
   const [confirmShowPassword, setConfirmShowPassword] = useState(false);
   const { showToast } = useToast();
   const handleSuccess = () => {
-    showToast("success", "User has been created!");
+    showToast("success", "Usuário criado com sucesso!");
   };
 
   const handleError = (message: string) => {
@@ -73,15 +73,13 @@ const CreateUser: React.FC = () => {
       console.log(error);
       if (error instanceof AxiosError) {
         if (error?.response?.status === 409) {
-          setLoginError(
-            "An account with that email or username already exists!",
-          );
+          setLoginError("Essa conta de email ou nome de usuário já existe!");
           setError("email", { type: "focus" }, { shouldFocus: true });
           setError("name", { type: "focus" }, { shouldFocus: true });
-          handleError("An account with that email or username already exists!");
+          handleError("Essa conta de email ou nome de usuário já existe!");
         } else {
-          setLoginError("Unable to create user!");
-          handleError("Unable to create user!");
+          setLoginError("Erro ao criar usuário!");
+          handleError("Erro ao criar usuário!");
         }
       }
     }
@@ -111,16 +109,16 @@ const CreateUser: React.FC = () => {
 
           <div className="w-full">
             <label htmlFor="name" className="text-sm text-spanTwoColor w-full">
-              User name
+              Nome de usuário
             </label>
             <div className="relative w-full mb-2">
               <input
                 type="text"
-                placeholder="name"
+                placeholder="nome de usuário"
                 id="name"
                 className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-prymaryPurple invalid:outline-red-500 aria-required:outline-red-500"
                 {...register("name", {
-                  required: "Enter your name",
+                  required: "Digite seu nome de usuário",
                 })}
                 aria-required={errors?.name ? true : false}
               />
@@ -146,7 +144,7 @@ const CreateUser: React.FC = () => {
                 id="email"
                 className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-prymaryPurple invalid:outline-red-500 aria-required:outline-red-500"
                 {...register("email", {
-                  required: "Enter your email",
+                  required: "Digite seu email",
                 })}
                 aria-required={errors.email ? true : false}
               />
@@ -166,16 +164,16 @@ const CreateUser: React.FC = () => {
               htmlFor="password"
               className="text-sm text-spanTwoColor w-full"
             >
-              Password
+              Senha
             </label>
             <div className="relative w-full mb-2">
               <input
                 type={`${!showPassword ? "password" : "text"}`}
-                placeholder="password"
+                placeholder="senha"
                 id="password"
                 className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-prymaryPurple invalid:outline-red-500 aria-required:outline-red-500"
                 {...register("password", {
-                  required: "Enter your password",
+                  required: "Digite sua senha",
                 })}
                 aria-required={errors?.password ? true : false}
               />
@@ -208,16 +206,16 @@ const CreateUser: React.FC = () => {
               htmlFor="confirm_password"
               className="text-sm text-spanTwoColor w-full"
             >
-              Confirm password
+              Confirmar senha
             </label>
             <div className="relative w-full mb-2">
               <input
                 type={`${!confirmShowPassword ? "password" : "text"}`}
-                placeholder="confirm password"
+                placeholder="confirmar senha"
                 id="confirm_password"
                 className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-prymaryPurple invalid:outline-red-500 aria-required:outline-red-500"
                 {...register("confirm_password", {
-                  required: "Confirm your password",
+                  required: "Confirme sua senha",
                 })}
                 aria-required={errors?.confirm_password ? true : false}
               />
@@ -250,7 +248,7 @@ const CreateUser: React.FC = () => {
               className="bg-purple-500 text-base w-full rounded-full py-3 opacity-70 hover:opacity-100"
               type="submit"
             >
-              Create
+              Cadastrar
             </button>
           </div>
 

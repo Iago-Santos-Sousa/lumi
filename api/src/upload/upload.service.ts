@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+
 import {
   ConflictException,
   Injectable,
@@ -11,12 +14,9 @@ import {
 } from "@nestjs/common";
 import { DataSource } from "typeorm/data-source/DataSource";
 import { InjectDataSource } from "@nestjs/typeorm";
-import { CreateUploadDto } from "./dto/create-upload.dto";
-import { UpdateUploadDto } from "./dto/update-upload.dto";
 import { BadRequestException } from "@nestjs/common";
 import * as fs from "fs";
 import * as path from "path";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfjs =
   require("pdfjs-dist/legacy/build/pdf.mjs") as typeof import("pdfjs-dist");
 import { MONTH_MAP } from "src/utils/enums";
@@ -25,6 +25,14 @@ import { parseNumber } from "src/utils";
 import { InvoiceService } from "src/invoice/invoice.service";
 import { ClientService } from "src/client/client.service";
 import { Invoice } from "src/invoice/entities/invoice.entity";
+import { MAX_FILES_PER_UPLOAD } from "src/common/constants/pdf.constant";
+
+type ParsedFile = {
+  file: Express.Multer.File;
+  data: ExtractedInvoiceData;
+  savedFilename: string;
+  savedFilePath: string;
+};
 
 @Injectable()
 export class UploadService {
@@ -34,32 +42,16 @@ export class UploadService {
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
-  create(createUploadDto: CreateUploadDto) {
-    return "This action adds a new upload";
-  }
-
-  findAll() {
-    return `This action returns all upload`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} upload`;
-  }
-
-  update(id: number, updateUploadDto: UpdateUploadDto) {
-    return `This action updates a #${id} upload`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} upload`;
-  }
-
-  async downloadFile(clientNumber: number, referenceMonth: string) {
-    const invoice =
-      await this.clientService.findByClientNumberAndReferenceMonth(
-        clientNumber,
-        referenceMonth,
-      );
+  async downloadFile(
+    clientId: number,
+    referenceMonth: string,
+    invoiceId: number,
+  ) {
+    const invoice = await this.clientService.findByClientIdAndReferenceMonth(
+      clientId,
+      referenceMonth,
+      invoiceId,
+    );
 
     const filePath = path.join(
       process.cwd(),
@@ -80,15 +72,11 @@ export class UploadService {
     };
   }
 
-  /**
-   * Recebe o buffer do PDF enviado via upload (Multer),
-   * extrai os dados, calcula os campos derivados e
-   * persiste tudo no banco usando uma transação.
-   *
-   * @param buffer   - Buffer do arquivo PDF (file.buffer do Multer)
-   * @param filename - Nome original do arquivo (file.originalname do Multer)
-   * @param filePath - Caminho/URL onde o PDF foi salvo no storage
-   */
+  async extractAndParsePdf(buffer: Buffer): Promise<ExtractedInvoiceData> {
+    const rawText = await this.extractTextFromPdf(buffer);
+    return this.parseInvoiceData(rawText);
+  }
+
   async processInvoicePdf(
     buffer: Buffer,
     filename?: string,
@@ -99,14 +87,20 @@ export class UploadService {
       filePath = "unknown_path/unknown.pdf";
     }
 
-    // 1. Extração do texto bruto via pdfjs-dist
-    const rawText = await this.extractTextFromPdf(buffer);
+    const data = await this.extractAndParsePdf(buffer);
 
-    // 2. Parsing e cálculo dos campos a partir do texto
-    const data = this.parseInvoiceData(rawText);
-
-    // 3. Persistência dentro de uma transação
-    return this.persistWithTransaction(data, filename, filePath);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    try {
+      return await this.persistWithQueryRunner(
+        queryRunner,
+        data,
+        filename,
+        filePath,
+      );
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
@@ -163,7 +157,7 @@ export class UploadService {
    */
 
   private parseInvoiceData(text: string): ExtractedInvoiceData {
-    // ── Nº do Cliente e Nº da Instalação ──
+    // Nº do Cliente e Nº da Instalação
     const clientMatch = text.match(
       /Nº DO CLIENTE\s+Nº DA INSTALAÇÃO\s+(\d+)\s+(\d+)/,
     );
@@ -201,8 +195,8 @@ export class UploadService {
       document_number = docMatch[2].trim();
     }
 
-    // ── Mês de referência ──
-    // Formato no texto: "JAN/2024    09/02/2024    66,62"
+    // Mês de referência
+    // Formato no texto: "JAN/2024  09/02/2024  66,62"
     const refMatch = text.match(
       /(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)\/(\d{4})\s+\d{2}\/\d{2}\/\d{4}/,
     );
@@ -221,14 +215,17 @@ export class UploadService {
       1,
     );
 
-    // ── Bloco de itens da fatura ──
+    // Bloco de itens da fatura
     // Formato real (uma linha por item):
     // Energia Elétrica kWh 100 0,95543124 95,52 0,74906000
     // Energia SCEE s/ ICMS kWh 2.300 0,50970610 1.172,31 0,48733000
     // Energia compensada GD I kWh 2.300 0,48733000 -1.120,85 0,48733000
     // Contrib Ilum Publica Municipal 40,45
+    // [^\n]* ao final de cada linha consome qualquer número de colunas extras
+    // (PIS/COFINS, Base Calc., Aliq. ICMS, Tarifa Unit., etc.) que variam
+    // conforme o layout da fatura, sem que isso impeça o match.
     const billingMatch = text.match(
-      /Energia El[eé]trica\s+kWh\s+([\d.]+)\s+[\d,]+\s+([\d.,]+)\s+[\d,]+\s*\nEnergia SCEE s\/ ICMS\s+kWh\s+([\d.]+)\s+[\d,]+\s+([\d.,]+)\s+[\d,]+\s*\nEnergia compensada GD I\s+kWh\s+([\d.]+)\s+[\d,]+\s+(-?[\d.,]+)\s+[\d,]+\s*\nContrib Ilum Publica Municipal\s+([\d.,]+)/,
+      /Energia El[eé]trica\s+kWh\s+([\d.]+)\s+[\d,]+\s+([\d.,]+)[^\n]*\nEnergia SCEE s\/ ICMS\s+kWh\s+([\d.]+)\s+[\d,]+\s+([\d.,]+)[^\n]*\nEnergia compensada GD I\s+kWh\s+([\d.]+)\s+[\d,]+\s+(-?[\d.,]+)[^\n]*\nContrib Ilum Publica Municipal\s+([\d.,]+)/,
     );
 
     if (!billingMatch) {
@@ -239,7 +236,7 @@ export class UploadService {
     }
 
     // Grupos: [1]=eeKwh [2]=eeValor [3]=sceeeKwh [4]=sceeeValor
-    //         [5]=compKwh [6]=compValor [7]=contrib
+    // [5]=compKwh [6]=compValor [7]=contrib
     const energiaEletricaKwh = parseNumber(billingMatch[1]);
     const energiaEletricaValor = parseNumber(billingMatch[2]);
     const energiaSceeeKwh = parseNumber(billingMatch[3]);
@@ -248,7 +245,7 @@ export class UploadService {
     const energiaCompensadaValor = parseNumber(billingMatch[6]);
     const contribIlumPublica = parseNumber(billingMatch[7]);
 
-    // ── Variáveis calculadas ──
+    // Variáveis calculada
     const consumoEnergiaEletricaKwh = energiaEletricaKwh + energiaSceeeKwh;
 
     const valorTotalSemGd =
@@ -280,34 +277,21 @@ export class UploadService {
     };
   }
 
-  /**
-   * Usa QueryRunner para garantir atomicidade:
-   * se qualquer operação falhar, toda a transação é revertida (ROLLBACK).
-   *
-   * Fluxo:
-   *   1. Upsert do cliente (cria se não existir, retorna se já existir)
-   *   2. Verifica duplicidade de fatura (mesmo cliente + mesmo mês)
-   *   3. Cria e salva a fatura
-   *   4. COMMIT
-   */
-  private async persistWithTransaction(
+  private async persistWithQueryRunner(
+    queryRunner: import("typeorm").QueryRunner,
     data: ExtractedInvoiceData,
     filename: string,
     filePath: string,
-  ) {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
+  ): Promise<Invoice> {
     await queryRunner.startTransaction();
     try {
       const clientNumber = Number(data.client_number);
-      // 1. Upsert do cliente
+
       const client = await this.clientService.createClient(
         queryRunner,
         clientNumber,
       );
 
-      // 2. Upsert de invoice
       const invoice = await this.invoiceService.createInvoice(
         queryRunner,
         data,
@@ -317,96 +301,156 @@ export class UploadService {
       );
 
       await queryRunner.commitTransaction();
-
       return invoice;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      if (
-        error instanceof ConflictException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
+      throw error;
+    }
+  }
+
+  async uploadFiles(files: Express.Multer.File[]) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException("Nenhum arquivo foi enviado.");
+    }
+
+    if (files.length > MAX_FILES_PER_UPLOAD) {
+      throw new BadRequestException(
+        `Máximo de ${MAX_FILES_PER_UPLOAD} arquivos por requisição.`,
+      );
+    }
+
+    const allowedMimeTypes = ["application/pdf"];
+    const allowedExtensions = ["pdf"];
+    const maxSizeInBytes = 40 * 1024; // 40 KB
+
+    const parsed: ParsedFile[] = [];
+    const failed: { filename: string; error: string }[] = [];
+
+    for (const file of files) {
+      const filename = file.originalname || "unknown.pdf";
+
+      if (!file.mimetype || !allowedMimeTypes.includes(file.mimetype)) {
+        failed.push({
+          filename,
+          error: "Tipo de arquivo inválido. Apenas PDF é permitido.",
+        });
+        continue;
       }
 
-      throw new InternalServerErrorException(
-        `Erro ao salvar fatura no banco de dados: ${error.message}`,
-      );
+      const extension = filename.split(".").pop()?.toLowerCase();
+      if (!extension || !allowedExtensions.includes(extension)) {
+        failed.push({
+          filename,
+          error: `Extensão inválida (.${extension}). Permitidas: ${allowedExtensions.join(", ")}`,
+        });
+        continue;
+      }
+
+      if (file.size > maxSizeInBytes) {
+        failed.push({
+          filename,
+          error: `Arquivo muito grande. Máximo permitido: ${(maxSizeInBytes / 1024).toFixed(2)} KB`,
+        });
+        continue;
+      }
+
+      // Extração e parse do PDF (CPU, sem banco)
+      try {
+        const data = await this.extractAndParsePdf(file.buffer);
+        const { savedFilename, savedFilePath } = this.savePdfToDisk(
+          file.buffer,
+          filename,
+        );
+        parsed.push({ file, data, savedFilename, savedFilePath });
+      } catch (err) {
+        failed.push({
+          filename,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    if (parsed.length === 0) {
+      return { succeeded: [], failed };
+    }
+
+    // Fase 2: persistência — UMA única conexão para todo o lote
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+
+    const succeeded: object[] = [];
+
+    try {
+      for (const { file, data, savedFilename, savedFilePath } of parsed) {
+        try {
+          const invoice = await this.persistWithQueryRunner(
+            queryRunner,
+            data,
+            savedFilename,
+            savedFilePath,
+          );
+
+          succeeded.push({
+            filename: savedFilename,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            invoice,
+          });
+        } catch (err) {
+          // Remove o arquivo salvo em disco se a persistência falhou
+          // if (fs.existsSync(savedFilePath)) {
+          //   fs.unlinkSync(savedFilePath);
+          // }
+
+          failed.push({
+            filename: file.originalname,
+            error:
+              err instanceof ConflictException ||
+              err instanceof BadRequestException
+                ? err.message
+                : `Erro ao salvar fatura: ${err instanceof Error ? err.message : String(err)}`,
+          });
+        }
+      }
     } finally {
       await queryRunner.release();
     }
+
+    return { succeeded, failed };
   }
 
-  async uploadFile(file: Express.Multer.File) {
-    const allowedMimeTypes = ["application/pdf"];
-    const allowedExtensions = ["pdf"];
-
-    if (!file || !file.mimetype || !allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        "Invalid file type. Only PDF files are allowed.",
-      );
-    }
-
-    const maxSizeInBytes = 40 * 1024; // 40kb
-
-    const extension = file.originalname.split(".").pop()?.toLowerCase();
-    if (!extension || !allowedExtensions.includes(extension)) {
-      throw new BadRequestException(
-        `Extensão inválida (.${extension}). Permitidas: ${allowedExtensions.join(", ")}`,
-      );
-    }
-
-    if (file.size > maxSizeInBytes) {
-      throw new BadRequestException(
-        `Arquivo muito grande. Máximo permitido: ${(maxSizeInBytes / 1024).toFixed(2)} KB`,
-      );
-    }
-
-    if (!file.originalname) {
-      file.originalname = "unknown.pdf";
-    }
-
-    const { savedFilename, savedFilePath } = this.savePdfToDisk(
-      file.buffer,
-      file.originalname,
-    );
-
-    const invoice = await this.processInvoicePdf(
-      file.buffer,
-      savedFilename,
-      savedFilePath,
-    );
-
-    return {
-      message: "File uploaded successfully",
-      filename: savedFilename,
-      filePath: savedFilePath,
-      mimetype: file.mimetype,
-      size: file.size,
-      invoice,
-    };
-  }
-
-  /**
-   * Salva o buffer do PDF em disco e retorna o nome e caminho do arquivo.
-   * Os arquivos são armazenados em <project_root>/uploads/invoices/.
-   * O nome inclui um timestamp para evitar colisões.
-   */
   private savePdfToDisk(
     buffer: Buffer,
     originalname: string,
   ): { savedFilename: string; savedFilePath: string } {
+    const response = {
+      savedFilename: "",
+      savedFilePath: "",
+    };
+
     const uploadsDir = path.join(process.cwd(), "uploads", "invoices");
+    const targetPath = path.join(uploadsDir, originalname);
+
+    if (fs.existsSync(targetPath)) {
+      fs.writeFileSync(targetPath, buffer);
+      response.savedFilename = originalname;
+      response.savedFilePath = targetPath;
+      return response;
+    }
 
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    const timestamp = Date.now();
-    const savedFilename = `${timestamp}-${originalname}`;
+    const savedFilename = `${originalname}`;
     const savedFilePath = path.join(uploadsDir, savedFilename);
 
     fs.writeFileSync(savedFilePath, buffer);
 
-    return { savedFilename, savedFilePath };
+    response.savedFilename = savedFilename;
+    response.savedFilePath = savedFilePath;
+
+    return response;
   }
 }

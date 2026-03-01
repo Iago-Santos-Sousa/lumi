@@ -8,13 +8,7 @@ import { userApi } from "../../integrations/user";
 import { useForm } from "react-hook-form";
 import { AxiosError } from "axios";
 import { useToast } from "../../context/ToastContext";
-import {
-  useParams,
-  Params,
-  useNavigate,
-  NavigateFunction,
-} from "react-router-dom";
-// import { useLogin } from "../../context/AppProvider";
+import { useParams, Params } from "react-router-dom";
 
 type Inputs = {
   password: string;
@@ -31,7 +25,6 @@ interface UserInfos {
 
 const UserDetails: React.FC = () => {
   const userParam: Params<string> | undefined = useParams();
-  // const navigate: NavigateFunction = useNavigate();
   const [userInfo, setUserInfo] = useState<UserInfos>({
     email: "",
     name: "",
@@ -39,9 +32,6 @@ const UserDetails: React.FC = () => {
   });
 
   const { showToast } = useToast();
-  const handleSuccess = () => {
-    showToast("success", "User has been created!");
-  };
 
   const handleError = (message: string) => {
     showToast("error", message);
@@ -49,58 +39,11 @@ const UserDetails: React.FC = () => {
 
   const {
     register,
-    handleSubmit,
-    setError,
-    clearErrors,
-    setValue,
     formState: { errors },
   } = useForm<Inputs>();
 
-  const handleEditUser = async (data: Inputs): Promise<void> => {
-    clearErrors();
-
-    try {
-      data.password = data.password ? data.password.trim() : "";
-      data.confirm_password = data.confirm_password
-        ? data.confirm_password.trim()
-        : "";
-      data.name = data.name ? data.name.trim() : "";
-      data.email = data.email ? data.email.trim() : "";
-
-      if (data.password !== data.confirm_password) {
-        setError(
-          "confirm_password",
-          { type: "required", message: "Confirm password!" },
-          { shouldFocus: true },
-        );
-        return;
-      }
-
-      const createUserData = {
-        ...data,
-        role: "user",
-      };
-
-      const result = await userApi().createUser(createUserData);
-      console.log(result);
-      handleSuccess();
-    } catch (error: unknown | AxiosError) {
-      console.log(error);
-      if (error instanceof AxiosError) {
-        if (error?.response?.status === 409) {
-          setError("email", { type: "focus" }, { shouldFocus: true });
-          setError("name", { type: "focus" }, { shouldFocus: true });
-          handleError("An account with that email or username already exists!");
-        } else {
-          handleError("Unable to create user!");
-        }
-      }
-    }
-  };
-
   useEffect(() => {
     if (userParam?.userId) {
-      // const userId: number = parseInt(userParam.userId);
       const userId: string = userParam.userId;
       userApi()
         .getUser(userId)
@@ -128,10 +71,7 @@ const UserDetails: React.FC = () => {
         </Link>
       </div>
       <div className="login-page bg-white px-6 py-6 mt-0 mx-auto max-w-[min(80%,450px)] relative">
-        <form
-          className="flex flex-col gap-6"
-          // onSubmit={handleSubmit(handleEditUser)}
-        >
+        <form className="flex flex-col gap-6">
           <div className="w-[100px] h-[100px] mx-auto">
             <img src={userCreate} alt="create-user" className="w-full h-full" />
           </div>

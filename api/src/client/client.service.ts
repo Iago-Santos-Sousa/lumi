@@ -1,6 +1,4 @@
 import { ConflictException, Injectable } from "@nestjs/common";
-import { CreateClientDto } from "./dto/create-client.dto";
-import { UpdateClientDto } from "./dto/update-client.dto";
 import { Client } from "./entities/client.entity";
 import { ClientRepository } from "./repositories/client.repository";
 import { QueryRunner } from "typeorm/query-runner/QueryRunner";
@@ -10,12 +8,8 @@ import { ListClientsParamsDto } from "./dto/list-clients-params.dto";
 export class ClientService {
   constructor(private readonly clientRepository: ClientRepository) {}
 
-  create(createClientDto: CreateClientDto) {
-    return "This action adds a new client";
-  }
-
   async createClient(queryRunner: QueryRunner, client_number: number) {
-    let client = await this.clientRepository.findOne({
+    let client = await queryRunner.manager.findOne(Client, {
       where: { client_number },
     });
 
@@ -54,7 +48,6 @@ export class ClientService {
 
     const queryBuilder = this.clientRepository.createQueryBuilder("client");
 
-    // relacionamento com a tabela de faturas
     queryBuilder.leftJoinAndSelect("client.invoices", "invoice");
 
     queryBuilder.orderBy("client.created_at", "ASC");
@@ -93,7 +86,6 @@ export class ClientService {
     }
 
     if (initial_date && final_date) {
-      // Transforma data inicial e final para o timezone do servidor (UTC), e na data inicial deve iniciar com 00:00:00 e na data final deve terminar com 23:59:59 para garantir que o filtro inclua todo o período
       const initialDate = new Date(initial_date);
       initialDate.setUTCHours(0, 0, 0, 0);
 
@@ -121,38 +113,36 @@ export class ClientService {
     };
   }
 
-  async findByClientNumberAndReferenceMonth(
-    client_number: number,
+  async findByClientIdAndReferenceMonth(
+    client_id: number,
     reference_month: string,
+    invoice_id: number,
   ) {
     reference_month = reference_month.replace("-", "/");
 
     const client = await this.clientRepository.findOne({
-      where: { client_number },
+      where: { id: client_id },
       relations: ["invoices"],
     });
 
     if (!client) {
       throw new ConflictException(
-        `Cliente com número ${client_number} não encontrado.`,
+        `Cliente com ID ${client_id} não encontrado.`,
       );
     }
 
     const invoice = client.invoices.find(
-      (inv) => inv.reference_month === reference_month,
+      (inv) => inv.reference_month === reference_month && inv.id === invoice_id,
     );
 
     if (!invoice) {
       throw new ConflictException(
-        `Fatura para o cliente ${client_number} referente a ${reference_month} não encontrada.`,
+        `Fatura para o cliente ${client_id} referente a ${reference_month} não encontrada.`,
       );
     }
 
+    client.invoices = [invoice];
     return client;
-  }
-
-  findAll() {
-    return `This action returns all client`;
   }
 
   async findOne(id: number) {
@@ -166,13 +156,5 @@ export class ClientService {
     }
 
     return client;
-  }
-
-  update(id: number, updateClientDto: UpdateClientDto) {
-    return `This action updates a #${id} client`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} client`;
   }
 }

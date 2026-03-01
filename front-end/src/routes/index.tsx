@@ -6,10 +6,9 @@ import CreateUser from "../pages/CreateUser/CreateUser";
 import UserDetails from "../pages/UserDetails/UserDetails";
 import AuthenticatedRoute from "./AuthenticatedRoute";
 import ProfileCard from "../pages/ProfileCard/ProfileCard";
-import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword/ResetPassword";
 import SharedLayout from "../components/SharedLayout";
 import InvoiceLibrary from "../pages/InvoiceLibrary/InvoiceLibrary";
+import Dashboard from "../pages/Dashboard/Dashboard";
 
 const AllRoutes: React.FC = () => {
   return (
@@ -17,8 +16,6 @@ const AllRoutes: React.FC = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="create-user" element={<CreateUser />} />
-        <Route path="reset-password" element={<ForgotPassword />} />
-        <Route path="reset-password/:token" element={<ResetPassword />} />
         <Route
           path="panel"
           element={
@@ -48,6 +45,14 @@ const AllRoutes: React.FC = () => {
             element={
               <SharedLayout>
                 <InvoiceLibrary />
+              </SharedLayout>
+            }
+          />
+          <Route
+            path="dashboard"
+            element={
+              <SharedLayout>
+                <Dashboard />
               </SharedLayout>
             }
           />

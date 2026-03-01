@@ -9,24 +9,35 @@ const Header: React.FC = () => {
 
   return (
     <header className="w-full bg-prymaryBlue py-4 flex justify-between items-center px-8">
-      <div className="logo-img w-[80px] h-[80px]">
-        <img src={userLogo} alt="user-logo" className="w-full h-full" />
+      <div className="flex justify-center items-center gap-6">
+        <div className="logo-img w-[80px] h-[80px]">
+          <img src={userLogo} alt="user-logo" className="w-full h-full" />
+        </div>
+
+        <h1 className="text-2xl font-bold text-white">
+          Bem-vindo, {useLogin().user.name}!
+        </h1>
       </div>
 
       <nav className="navbar">
         <div>
           <ul className="flex gap-6 text-white">
             <li className="">
-              <Link to={"/panel"}>Panel</Link>
+              <Link to={"/panel"}>Painel</Link>
             </li>
             <li className="">
               <Link to={`user-details/${useLogin().user.userId}`}>
-                <button>Details</button>
+                <button>Detalhes</button>
+              </Link>
+            </li>
+            <li>
+              <Link to={"/panel/dashboard"}>
+                <button>Dashboard</button>
               </Link>
             </li>
             <li>
               <Link to={"/panel/invoice-library"}>
-                <button>Invoice Library</button>
+                <button>Biblioteca de Faturas</button>
               </Link>
             </li>
 
@@ -36,13 +47,13 @@ const Header: React.FC = () => {
                 onClick={() => {
                   loginAPi()
                     .logOut()
-                    .then((response) => {
+                    .then(() => {
                       signOut();
                       navigate("/", { replace: true });
                     });
                 }}
               >
-                Log out
+                Sair
               </button>
             </li>
           </ul>

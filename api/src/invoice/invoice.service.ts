@@ -1,6 +1,4 @@
 import { ConflictException, Injectable } from "@nestjs/common";
-import { CreateInvoiceDto } from "./dto/create-invoice.dto";
-import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
 import { QueryRunner } from "typeorm/query-runner/QueryRunner";
 import { InvoiceRepository } from "./repositories/invoice.repository";
 import { Invoice } from "./entities/invoice.entity";
@@ -12,10 +10,6 @@ import { DashboardQueryDto } from "./dto/dashboard-query.dto";
 export class InvoiceService {
   constructor(private readonly invoiceRepository: InvoiceRepository) {}
 
-  create(createInvoiceDto: CreateInvoiceDto) {
-    return "This action adds a new invoice";
-  }
-
   async createInvoice(
     queryRunner: QueryRunner,
     data: ExtractedInvoiceData,
@@ -23,7 +17,7 @@ export class InvoiceService {
     filename: string,
     filePath: string,
   ) {
-    const invoice = await this.invoiceRepository.findOne({
+    const invoice = await queryRunner.manager.findOne(Invoice, {
       where: { client_id: client.id, reference_month: data.reference_month },
     });
 
@@ -63,23 +57,6 @@ export class InvoiceService {
     return await queryRunner.manager.save(Invoice, invoiceCreate);
   }
 
-  findAll() {
-    return `This action returns all invoice`;
-  }
-
-  /**
-   * Retorna os dados consolidados para o dashboard.
-   *
-   * Filtros opcionais:
-   *   - client_number : exibe apenas faturas de um cliente
-   *   - initial_date  : data inicial do período (reference_date >= initial_date)
-   *   - final_date    : data final do período   (reference_date <= final_date)
-   *
-   * Retorna:
-   *   - totals : somatórios acumulados de todas as variáveis de interesse
-   *   - chart  : série temporal agrupada por mês (reference_month), ordenada
-   *              cronologicamente — usada para plotar os dois gráficos do front
-   */
   async getDashboard(query: DashboardQueryDto) {
     const { client_number, initial_date, final_date } = query;
 
@@ -109,7 +86,7 @@ export class InvoiceService {
       .orderBy("invoice.reference_date", "ASC")
       .getMany();
 
-    // ── Totais acumulados (cards do dashboard) ──────────────────────────────
+    // Totais acumulados
     const totals = invoices.reduce(
       (acc, inv) => ({
         consumo_energia_eletrica_kwh:
@@ -129,9 +106,8 @@ export class InvoiceService {
       },
     );
 
-    // ── Série temporal por mês (pontos dos gráficos) ────────────────────────
-    // Agrupa por reference_month preservando a ordem cronológica (já ordenada
-    // pela query). Cada entrada representa um ponto no eixo X dos gráficos.
+    // Série temporal por mês
+    // Agrupa por reference_month preservando a ordem cronológica (já ordenada pela query)
     const monthMap = new Map<
       string,
       {
@@ -172,17 +148,5 @@ export class InvoiceService {
       totals,
       chart: Array.from(monthMap.values()),
     };
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} invoice`;
-  }
-
-  update(id: number, updateInvoiceDto: UpdateInvoiceDto) {
-    return `This action updates a #${id} invoice`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} invoice`;
   }
 }

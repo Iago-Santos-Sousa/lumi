@@ -17,3 +17,26 @@ export interface IInvoice {
   pdf_path: string | null;
   updated_at: string;
 }
+
+export interface IInvoiceDashboardData {
+  totals: {
+    consumo_energia_eletrica_kwh: number;
+    energia_compensada_kwh: number;
+    valor_total_sem_gd: number;
+    economia_gd: number;
+  };
+  chart: {
+    reference_month: string;
+    reference_date: Date;
+    consumo_energia_eletrica_kwh: number;
+    energia_compensada_kwh: number;
+    valor_total_sem_gd: number;
+    economia_gd: number;
+  }[];
+}
+
+export interface IInvoiceDashboardDataParams {
+  client_number?: number;
+  initial_date?: string;
+  final_date?: string;
+}

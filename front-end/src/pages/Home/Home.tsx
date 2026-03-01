@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
           userId: auth.payload.sub.toString(),
         };
         await signIn(userInfos, auth.access_token, auth.refresh_token);
-        navigate("panel");
+        navigate("/panel/dashboard", { replace: true });
       }
     } catch (error: unknown | AxiosError) {
       console.error(error);
@@ -52,14 +52,14 @@ const LoginPage: React.FC = () => {
           error?.response?.status === 401 ||
           error?.response?.statusText === "Unauthorized"
         ) {
-          setLoginError("email or password are incorrect!");
+          setLoginError("E-mail ou senha inválidos!");
           setError("email", { type: "focus" }, { shouldFocus: true });
           setError("password", { type: "focus" }, { shouldFocus: true });
           return;
         }
       }
 
-      setLoginError("Unable to login!");
+      setLoginError("Erro ao realizar login. Tente novamente mais tarde.");
       setError("email", { type: "focus" }, { shouldFocus: true });
       setError("password", { type: "focus" }, { shouldFocus: true });
     }
@@ -72,7 +72,9 @@ const LoginPage: React.FC = () => {
           className="flex flex-col gap-6"
           onSubmit={handleSubmit(handleSignIn)}
         >
-          <h1 className="text-center text-4xl font-bold">Login</h1>
+          <h1 className="text-center text-4xl font-bold">
+            Login - Lumi Faturas
+          </h1>
 
           <div className="w-full">
             <label htmlFor="email" className="text-sm text-spanTwoColor w-full">
@@ -106,7 +108,7 @@ const LoginPage: React.FC = () => {
               htmlFor="password"
               className="text-sm text-spanTwoColor w-full"
             >
-              Password
+              Senha
             </label>
             <div className="relative w-full mb-2">
               <input
@@ -150,12 +152,6 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          <div className="text-sm	text-spanColor text-end hover:text-blue-500 transition-all">
-            <Link to={"/reset-password"}>
-              <span className="cursor-pointer">Forgot password?</span>
-            </Link>
-          </div>
-
           <div className="text-center text-white">
             <button
               className="bg-purple-500 text-base w-full rounded-full py-3 opacity-70 hover:opacity-100"
@@ -167,7 +163,7 @@ const LoginPage: React.FC = () => {
 
           <Link to={"/create-user"}>
             <div className="rounded-full text-base w-full py-3 text-center text-spanTwoColor hover:bg-purple-500 hover:text-white hover:cursor-pointer">
-              <span> SIGN UP</span>
+              <span> CADASTRAR</span>
             </div>
           </Link>
         </form>

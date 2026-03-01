@@ -41,24 +41,4 @@ export const userApi = () => ({
     const response = await api.get<UserDetails>(`/user/${user_id}`);
     return response.data.data;
   },
-
-  forgotPassword: async (email: string): Promise<ResponseType> => {
-    const response = await api.post<ResponseType>("/users/forgot-password", {
-      email,
-    });
-
-    return response.data;
-  },
-
-  resetPassword: async (
-    resetPasswordToken: string,
-    password: string,
-  ): Promise<ResponseType> => {
-    const response = await api.post<ResponseType>("/users/reset-password", {
-      resetPasswordToken,
-      password,
-    });
-
-    return response.data;
-  },
 });

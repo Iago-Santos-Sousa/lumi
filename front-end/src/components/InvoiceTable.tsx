@@ -124,7 +124,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ clients, isLoading }) => {
                       <Tooltip
                         title={
                           hasPdf
-                            ? `Fatura ${m.label}: ${invoice!.reference_month}`
+                            ? `Fatura ${m.label}: ${invoice!.reference_month} - Clique para baixar`
                             : invoice
                               ? "PDF não disponível"
                               : "Sem fatura"
@@ -142,8 +142,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ clients, isLoading }) => {
                             onClick={() => {
                               if (hasPdf) {
                                 downloadPdf(
-                                  client.client_number,
+                                  client.id,
                                   invoice!.reference_month,
+                                  invoice!.id,
                                 );
                               }
                             }}

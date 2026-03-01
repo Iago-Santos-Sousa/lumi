@@ -2,54 +2,37 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
   Res,
 } from "@nestjs/common";
 import { Response } from "express";
 import { UploadService } from "./upload.service";
-import { CreateUploadDto } from "./dto/create-upload.dto";
-import { UpdateUploadDto } from "./dto/update-upload.dto";
-import { FileInterceptor } from "@nestjs/platform-express/multer/interceptors/file.interceptor";
+import { FilesInterceptor } from "@nestjs/platform-express";
+import { MAX_FILES_PER_UPLOAD } from "src/common/constants/pdf.constant";
 
 @Controller("upload")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post()
-  create(@Body() createUploadDto: CreateUploadDto) {
-    return this.uploadService.create(createUploadDto);
-  }
-
   @Post("upload-file")
-  @UseInterceptors(FileInterceptor("file"))
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return this.uploadService.uploadFile(file);
+  @UseInterceptors(FilesInterceptor("files", MAX_FILES_PER_UPLOAD))
+  uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
+    return this.uploadService.uploadFiles(files);
   }
 
-  @Get()
-  findAll() {
-    return this.uploadService.findAll();
-  }
-
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.uploadService.findOne(+id);
-  }
-
-  @Get("/download/:client_number/:reference_month")
+  @Get("/download/:client_id/:reference_month/:invoice_id")
   async downloadFile(
-    @Param("client_number") clientNumber: string,
+    @Param("client_id") clientId: string,
     @Param("reference_month") referenceMonth: string,
+    @Param("invoice_id") invoiceId: string,
     @Res() res: Response,
   ) {
     const filePath = await this.uploadService.downloadFile(
-      Number(clientNumber),
+      Number(clientId),
       referenceMonth,
+      Number(invoiceId),
     );
 
     res.setHeader("Content-Type", "application/pdf");
@@ -59,15 +42,5 @@ export class UploadController {
     );
 
     return res.status(200).sendFile(filePath.filePath);
-  }
-
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateUploadDto: UpdateUploadDto) {
-    return this.uploadService.update(+id, updateUploadDto);
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.uploadService.remove(+id);
   }
 }
