@@ -7,22 +7,28 @@ import {
   UploadedFiles,
   Res,
 } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { Response } from "express";
 import { UploadService } from "./upload.service";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { MAX_FILES_PER_UPLOAD } from "src/common/constants/pdf.constant";
+import { UploadFilesDocs, DownloadFileDocs } from "./upload.docs";
 
+@ApiTags("Upload")
+@ApiBearerAuth()
 @Controller("upload")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post("upload-file")
   @UseInterceptors(FilesInterceptor("files", MAX_FILES_PER_UPLOAD))
+  @UploadFilesDocs()
   uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
     return this.uploadService.uploadFiles(files);
   }
 
   @Get("/download/:client_id/:reference_month/:invoice_id")
+  @DownloadFileDocs()
   async downloadFile(
     @Param("client_id") clientId: string,
     @Param("reference_month") referenceMonth: string,

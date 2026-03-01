@@ -7,12 +7,10 @@ import { TypeOrmModule, TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
-import { EmailModule } from "./email/email.module";
 import { InvoiceModule } from "./invoice/invoice.module";
 import { ClientModule } from "./client/client.module";
-import { UploadModule } from './upload/upload.module';
+import { UploadModule } from "./upload/upload.module";
 import databaseConfig from "./config/database.config";
-import emailConfig from "./config/email.config";
 
 @Module({
   imports: [
@@ -20,7 +18,7 @@ import emailConfig from "./config/email.config";
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
-      load: [databaseConfig, emailConfig],
+      load: [databaseConfig],
     }),
 
     // Configuração do TypeORM para conexão com o banco de dados
@@ -38,7 +36,6 @@ import emailConfig from "./config/email.config";
 
     AuthModule,
     UserModule,
-    EmailModule,
     InvoiceModule,
     ClientModule,
     UploadModule,

@@ -1,0 +1,78 @@
+services:
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: lumi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "senha123"
+      POSTGRES_DB: lumis
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lumi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lumis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── API NestJS ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: lumi_api
+    restart: unless-stopped
+    environment:
+      APP_PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: "senha123"
+      DB_SCHEMA: lumis
+      DB_SYNCHRONIZE: "true"
+      DB_CONNECTION_LIMIT: 10
+      JWT_SECRET: segredojwt_producao_lumi
+      JWT_REFRESH_SECRET: segredojwtrefresh_producao_lumi
+      JWT_EXPIRES: 30m
+      JWT_REFRESH_EXPIRES: 45m
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - lumi-network
+
+  # ── Front-end React + Nginx ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+      args:
+        # URL pública da API — o navegador se conecta diretamente ao host
+        VITE_API_BASE_URL: http://localhost:3001/api
+    container_name: lumi_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - lumi-network
+
+# ── Volumes persistentes ───────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  uploads_data:
+
+# ── Rede interna ───────────────────────────────────────────────────────────
+networks:
+  lumi-network:
+    driver: bridge

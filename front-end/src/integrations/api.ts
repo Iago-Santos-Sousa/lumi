@@ -7,8 +7,8 @@ import axios, {
 
 type RefreshTokenResponse = {
   status: string;
-  accessToken: string;
-  refreshToken: string;
+  access_token: string;
+  refresh_token: string;
 };
 
 const API_BASE_URL: string =
@@ -38,7 +38,7 @@ api.interceptors.response.use(
     const originalRequest: InternalAxiosRequestConfig | undefined =
       error.config;
 
-    if (error.response?.status === 403) {
+    if (error.response?.status === 403 || error.response?.status === 401) {
       const refreshToken: string | null =
         sessionStorage.getItem("user.refreshToken");
 
@@ -46,21 +46,24 @@ api.interceptors.response.use(
         try {
           // Requisição para gerar um novo accessToken
           const response = await api.post<RefreshTokenResponse>(
-            "/refresh-token",
+            "/auth/refresh-token",
             {
-              refreshToken,
+              refresh_token: refreshToken,
             },
           );
 
           // Coloca o novo accessToken e refreshToken no localStorage
-          sessionStorage.setItem("user.accessToken", response.data.accessToken);
+          sessionStorage.setItem(
+            "user.accessToken",
+            response.data.access_token,
+          );
           sessionStorage.setItem(
             "user.refreshToken",
-            response.data.refreshToken,
+            response.data.refresh_token,
           );
 
           if (originalRequest) {
-            originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+            originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
             return api(originalRequest);
           } else {
             throw new Error("Error in refresh-token requisition!");
