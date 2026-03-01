@@ -1,0 +1,3 @@
+# Diretório de migrations gerado pelo TypeORM CLI.
+# Os arquivos .ts são criados com:
+#   npm run migration:generate -- src/migrations/NomeDaMigration

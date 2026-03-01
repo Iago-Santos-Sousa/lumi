@@ -1,9 +1,9 @@
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { LoggerMiddleware } from "./common/middleware/logger.middleware";
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { TypeOrmModule, TypeOrmModuleOptions } from "@nestjs/typeorm";
+import { TypeOrmModule } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
@@ -11,6 +11,7 @@ import { InvoiceModule } from "./invoice/invoice.module";
 import { ClientModule } from "./client/client.module";
 import { UploadModule } from "./upload/upload.module";
 import databaseConfig from "./config/database.config";
+import AppDataSource from "data-source";
 
 @Module({
   imports: [
@@ -21,18 +22,7 @@ import databaseConfig from "./config/database.config";
       load: [databaseConfig],
     }),
 
-    // Configuração do TypeORM para conexão com o banco de dados
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const configOptions =
-          configService.get<TypeOrmModuleOptions>("database");
-        if (!configOptions) {
-          throw new Error("Database configuration not found");
-        }
-        return configOptions;
-      },
-    }),
+    TypeOrmModule.forRoot(AppDataSource.options),
 
     AuthModule,
     UserModule,

@@ -1,23 +1,22 @@
 import { registerAs } from "@nestjs/config";
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
-import { User } from "../user/entities/user.entity";
-import { Invoice } from "src/invoice/entities/invoice.entity";
-import { Client } from "src/client/entities/client.entity";
+import { dataSourceOptions } from "../../data-source";
 
+/**
+ * Configuração do banco de dados para o módulo TypeORM do NestJS.
+ * Estende as opções base de data-source.ts sobrescrevendo os valores
+ * específicos ao ambiente de runtime da aplicação.
+ */
 export default registerAs(
   "database",
   (): TypeOrmModuleOptions => ({
-    type: "postgres",
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_SCHEMA,
-    entities: [User, Client, Invoice],
+    ...dataSourceOptions,
+    // Em desenvolvimento pode-se usar synchronize=true via .env;
+    // em produção deve ser false e as migrations tratam o schema.
     synchronize: Boolean(process.env.DB_SYNCHRONIZE),
-    poolSize: 10,
-    extra: { bigNumberStrings: false },
-    migrationsRun: false,
-    migrations: ["dist/**/migrations/*.ts", "dist/**/migrations/*.js"],
+    // Executa automaticamente as migrations pendentes ao subir a aplicação.
+    migrationsRun: true,
+    // Em runtime o app usa os arquivos JS compilados.
+    migrations: ["dist/**/migrations/*.js"],
   }),
 );
