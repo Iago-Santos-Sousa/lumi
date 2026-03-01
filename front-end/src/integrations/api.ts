@@ -38,7 +38,7 @@ api.interceptors.response.use(
     const originalRequest: InternalAxiosRequestConfig | undefined =
       error.config;
 
-    if (error.response?.status === 403 || error.response?.status === 401) {
+    if (error.response?.status === 401) {
       const refreshToken: string | null =
         sessionStorage.getItem("user.refreshToken");
 
@@ -71,16 +71,20 @@ api.interceptors.response.use(
         } catch (error: unknown | AxiosError) {
           console.log(error);
           sessionStorage.clear();
-          window.location.replace("/");
+          if (window.location.pathname !== "/") {
+            window.location.replace("/");
+          }
         }
       } else {
         sessionStorage.clear();
-        window.location.replace("/");
+        if (window.location.pathname !== "/") {
+          window.location.replace("/");
+        }
       }
     }
 
     // Redirecionar para a tela de login caso o accessToken não seja mais válido
-    if (error?.response?.status === 401 || error?.response?.status === 403) {
+    if (error?.response?.status === 401) {
       if (window.location.pathname !== "/") {
         window.location.replace("/");
       }

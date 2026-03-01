@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, NavigateFunction, Link } from "react-router-dom";
+
 import userCreate from "../../assets/user-circle.svg";
 import passwordIcon from "../../assets/password-icon.svg";
 import emailIcon from "../../assets/email-icon.svg";
@@ -20,6 +21,7 @@ type Inputs = {
 };
 
 const CreateUser: React.FC = () => {
+  const navigate: NavigateFunction = useNavigate();
   const [loginError, setLoginError] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [confirmShowPassword, setConfirmShowPassword] = useState(false);
@@ -52,10 +54,34 @@ const CreateUser: React.FC = () => {
       data.name = data.name ? data.name.trim() : "";
       data.email = data.email ? data.email.trim() : "";
 
+      if (data.password.length < 6) {
+        setError(
+          "password",
+          {
+            type: "required",
+            message: "A senha deve conter no mínimo 6 caracteres",
+          },
+          { shouldFocus: true },
+        );
+        return;
+      }
+
+      if (data.confirm_password.length < 6) {
+        setError(
+          "confirm_password",
+          {
+            type: "required",
+            message: "A senha deve conter no mínimo 6 caracteres",
+          },
+          { shouldFocus: true },
+        );
+        return;
+      }
+
       if (data.password !== data.confirm_password) {
         setError(
           "confirm_password",
-          { type: "required", message: "Confirm password!" },
+          { type: "required", message: "As senhas não coincidem!" },
           { shouldFocus: true },
         );
         return;
@@ -69,6 +95,7 @@ const CreateUser: React.FC = () => {
       const result = await userApi().createUser(createUserData);
       console.log(result);
       handleSuccess();
+      navigate("/");
     } catch (error: unknown | AxiosError) {
       console.log(error);
       if (error instanceof AxiosError) {

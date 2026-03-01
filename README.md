@@ -15,7 +15,8 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 6. [Executando manualmente (sem Docker)](#executando-manualmente-sem-docker)
 7. [Variáveis de Ambiente](#variáveis-de-ambiente)
 8. [Documentação da API (Swagger)](#documentação-da-api-swagger)
-9. [Estrutura do Projeto](#estrutura-do-projeto)
+9. [Testes Unitários](#testes-unitários)
+10. [Estrutura do Projeto](#estrutura-do-projeto)
 
 ---
 
@@ -291,6 +292,65 @@ A documentação cobre todos os módulos:
 3. Clique no botão **Authorize 🔒** no topo da página
 4. Cole o token no campo e confirme
 5. Todas as requisições subsequentes incluirão o Bearer token
+
+---
+
+## Testes Unitários
+
+Os testes unitários cobrem três camadas da API:
+
+| Arquivo de teste                     | O que é testado                                     |
+| ------------------------------------ | --------------------------------------------------- |
+| `upload/upload.service.spec.ts`      | Parsing de PDF, validação de arquivos, persistência |
+| `invoice/invoice.service.spec.ts`    | Criação de fatura, cálculo dos valores agregados    |
+| `client/client.service.spec.ts`      | Idempotência de clientes, paginação e filtros       |
+| `invoice/invoice.controller.spec.ts` | Delegação e formato de resposta do dashboard        |
+
+Todos os testes ficam dentro de `api/src/`. A dependência `pdfjs-dist` (ESM com
+`import.meta`) é substituída pelo mock em `api/src/__mocks__/pdfjs-dist.ts`
+automaticamente via `moduleNameMapper` no Jest.
+
+### Executando os testes
+
+```bash
+cd api
+```
+
+**Todos os testes (execução única):**
+
+```bash
+npm test
+```
+
+**Com relatório de cobertura:**
+
+```bash
+npm run test:cov
+```
+
+O relatório HTML é gerado em `api/coverage/lcov-report/index.html`.
+
+**Modo watch (re-executa ao salvar):**
+
+```bash
+npm run test:watch
+```
+
+**Suite específica:**
+
+```bash
+# Apenas o serviço de upload
+npx jest upload.service.spec
+
+# Apenas o serviço de faturas
+npx jest invoice.service.spec
+
+# Apenas o serviço de clientes
+npx jest client.service.spec
+
+# Apenas o controller de faturas
+npx jest invoice.controller.spec
+```
 
 ---
 

@@ -21,11 +21,11 @@ const pdfjs =
   require("pdfjs-dist/legacy/build/pdf.mjs") as typeof import("pdfjs-dist");
 import { MONTH_MAP } from "src/utils/enums";
 import { ExtractedInvoiceData } from "src/common/interfaces";
-import { parseNumber } from "src/utils";
 import { InvoiceService } from "src/invoice/invoice.service";
 import { ClientService } from "src/client/client.service";
 import { Invoice } from "src/invoice/entities/invoice.entity";
 import { MAX_FILES_PER_UPLOAD } from "src/common/constants/pdf.constant";
+import { InvoiceDataDetailsMapper } from "./mappers/invoice-data-details.mapper";
 
 type ParsedFile = {
   file: Express.Multer.File;
@@ -155,7 +155,6 @@ export class UploadService {
   /**
    * 2. Parsing e cálculo dos campos a partir do texto
    */
-
   private parseInvoiceData(text: string): ExtractedInvoiceData {
     // Nº do Cliente e Nº da Instalação
     const clientMatch = text.match(
@@ -235,46 +234,18 @@ export class UploadService {
       );
     }
 
-    // Grupos: [1]=eeKwh [2]=eeValor [3]=sceeeKwh [4]=sceeeValor
-    // [5]=compKwh [6]=compValor [7]=contrib
-    const energiaEletricaKwh = parseNumber(billingMatch[1]);
-    const energiaEletricaValor = parseNumber(billingMatch[2]);
-    const energiaSceeeKwh = parseNumber(billingMatch[3]);
-    const energiaSceeeValor = parseNumber(billingMatch[4]);
-    const energiaCompensadaKwh = parseNumber(billingMatch[5]);
-    const energiaCompensadaValor = parseNumber(billingMatch[6]);
-    const contribIlumPublica = parseNumber(billingMatch[7]);
-
-    // Variáveis calculada
-    const consumoEnergiaEletricaKwh = energiaEletricaKwh + energiaSceeeKwh;
-
-    const valorTotalSemGd =
-      energiaEletricaValor + energiaSceeeValor + contribIlumPublica;
-
-    const economiaGd = Math.abs(energiaCompensadaValor); // sempre positivo
-
-    return {
-      client_number: clientNumber,
-      installation_number: installationNumber,
-      reference_month: referenceMonth,
-      reference_date: referenceDate,
-      energia_eletrica_kwh: energiaEletricaKwh,
-      energia_eletrica_valor: energiaEletricaValor,
-      energia_sceee_kwh: energiaSceeeKwh,
-      energia_sceee_valor: energiaSceeeValor,
-      energia_compensada_kwh: energiaCompensadaKwh,
-      energia_compensada_valor: energiaCompensadaValor,
-      contrib_ilum_publica: contribIlumPublica,
-      consumo_energia_eletrica_kwh: consumoEnergiaEletricaKwh,
-      valor_total_sem_gd: valorTotalSemGd,
-      economia_gd: economiaGd,
-      client_name: client_name,
-      address: address,
-      neighborhood: neighborhood,
-      city_state: city_state,
-      document_type: document_type,
-      document_number: document_number,
-    };
+    return InvoiceDataDetailsMapper.toDto(billingMatch, {
+      clientNumber,
+      installationNumber,
+      referenceMonth,
+      referenceDate,
+      client_name,
+      address,
+      neighborhood,
+      city_state,
+      document_type,
+      document_number,
+    });
   }
 
   private async persistWithQueryRunner(

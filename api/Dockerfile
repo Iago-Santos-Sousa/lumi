@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+RUN npm install
+
 # Copia todo o código-fonte e compila o TypeScript
 COPY . .
 RUN npm run build
@@ -35,4 +37,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
+CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js","npm", "run", "start:prod"]

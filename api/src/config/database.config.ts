@@ -17,7 +17,7 @@ export default registerAs(
     synchronize: Boolean(process.env.DB_SYNCHRONIZE),
     poolSize: 10,
     extra: { bigNumberStrings: false },
-    // migrations: [`${__dirname}/migration/{.ts,*.js}`],
-    // migrationsRun: true,
+    migrationsRun: false,
+    migrations: ["dist/**/migrations/*.ts", "dist/**/migrations/*.js"],
   }),
 );

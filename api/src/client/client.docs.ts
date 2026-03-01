@@ -69,13 +69,6 @@ export const FindAllClientsPaginatedDocs = () => {
       summary: "Listar clientes com paginação e filtros opcionais",
     }),
     ApiQuery({
-      name: "clientName",
-      required: false,
-      type: String,
-      description: "Filtrar pelo nome do cliente (correspondência parcial)",
-      example: "João Silva",
-    }),
-    ApiQuery({
       name: "client_number",
       required: false,
       type: Number,
