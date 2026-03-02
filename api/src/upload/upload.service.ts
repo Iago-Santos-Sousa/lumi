@@ -1,11 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-
 import {
   ConflictException,
   Injectable,
@@ -17,8 +9,10 @@ import { InjectDataSource } from "@nestjs/typeorm";
 import { BadRequestException } from "@nestjs/common";
 import * as fs from "fs";
 import * as path from "path";
-const pdfjs =
-  require("pdfjs-dist/legacy/build/pdf.mjs") as typeof import("pdfjs-dist");
+import type * as PdfJs from "pdfjs-dist";
+
+/** Subconjunto de TextItem usado na extração de texto do PDF. */
+type PdfTextItem = { str: string; transform: number[] };
 import { MONTH_MAP } from "src/utils/enums";
 import { ExtractedInvoiceData } from "src/common/interfaces";
 import { InvoiceService } from "src/invoice/invoice.service";
@@ -108,6 +102,12 @@ export class UploadService {
    */
   private async extractTextFromPdf(buffer: Buffer): Promise<string> {
     try {
+      // pdfjs-dist ≥ v4 é ESM puro — dynamic import() é a única forma de
+      // consumi-lo a partir de um módulo CommonJS (saída padrão do NestJS).
+      const pdfjs = (await import(
+        "pdfjs-dist/legacy/build/pdf.mjs"
+      )) as typeof PdfJs;
+
       const uint8Array = new Uint8Array(buffer);
 
       const loadingTask = pdfjs.getDocument({
@@ -130,7 +130,7 @@ export class UploadService {
         let lastY: number | null = null;
         const lines: string[] = [];
 
-        for (const item of content.items as any[]) {
+        for (const item of content.items as PdfTextItem[]) {
           if (!item.str) continue;
 
           const y = item.transform[5]; // posição Y do item
@@ -148,7 +148,10 @@ export class UploadService {
 
       return textPages.join("\n");
     } catch (error) {
-      throw new InternalServerErrorException("Failed to extract text from PDF");
+      throw new InternalServerErrorException(
+        "Failed to extract text from PDF: ",
+        error,
+      );
     }
   }
 
