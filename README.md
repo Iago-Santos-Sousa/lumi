@@ -77,6 +77,7 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 2. Back-end: **https://lumi-api-ldtz.onrender.com/api/status**
 
 - Crie o seu usuário e faça login para usar o aplicativo
+- **OBS**: Como a pai foi hospedada de forma gratuita, ela hiberna após 15 minutos de inatividade, então se acessar e não retornar nada ou ver algum erro reacarregue a página algumas vezes para volta ao normal.
 
 ---
 
