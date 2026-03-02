@@ -10,13 +10,14 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 1. [Visão Geral](#visão-geral)
 2. [Tecnologias](#tecnologias)
 3. [Pré-requisitos](#pré-requisitos)
-4. [Executando com Docker (recomendado)](#executando-com-docker-recomendado)
-5. [Criando o primeiro usuário](#criando-o-primeiro-usuário)
-6. [Executando manualmente (sem Docker)](#executando-manualmente-sem-docker)
-7. [Variáveis de Ambiente](#variáveis-de-ambiente)
-8. [Documentação da API (Swagger)](#documentação-da-api-swagger)
-9. [Testes Unitários](#testes-unitários)
-10. [Estrutura do Projeto](#estrutura-do-projeto)
+4. [Teste em deploy](#teste-em-deploy)
+5. [Executando com Docker (recomendado)](#executando-com-docker-recomendado)
+6. [Criando o primeiro usuário](#criando-o-primeiro-usuário)
+7. [Executando manualmente (sem Docker)](#executando-manualmente-sem-docker)
+8. [Variáveis de Ambiente](#variáveis-de-ambiente)
+9. [Documentação da API (Swagger)](#documentação-da-api-swagger)
+10. [Testes Unitários](#testes-unitários)
+11. [Estrutura do Projeto](#estrutura-do-projeto)
 
 ---
 
@@ -68,9 +69,20 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 
 ---
 
+## Teste em deploy
+
+### Teste em deploy do front-end e da api
+
+1. Front-end: **https://lumi-front-end.vercel.app/**
+2. Back-end: **https://lumi-api-ldtz.onrender.com/api/status**
+
+- Crie o seu usuário e faça login para usar o aplicativo
+
+---
+
 ## Executando com Docker (recomendado)
 
-### 1. Clone o repositório
+### 1. Clone o repositório e entre na branch "develop"
 
 ```bash
 git clone <url-do-repositorio>
@@ -273,6 +285,7 @@ O front-end estará disponível em http://localhost:5173
 
 Após subir qualquer um dos ambientes, a documentação completa e interativa da API estará disponível em:
 
+**https://lumi-api-ldtz.onrender.com/api**
 **http://localhost:3001/api**
 
 A documentação cobre todos os módulos:

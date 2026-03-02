@@ -11,7 +11,7 @@ export const dataSourceOptions: DataSourceOptions = {
   entities: ["dist/**/*.entity.js"],
   migrations: ["dist/**/migrations/*.js"],
   synchronize: false,
-  migrationsRun: true,
+  migrationsRun: false,
   extra: { bigNumberStrings: false },
   poolSize: 10,
 };
