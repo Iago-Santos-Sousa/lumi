@@ -23,12 +23,12 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 
 ## Visão Geral
 
-| Serviço    | URL local                 | Descrição                         |
-| ---------- | ------------------------- | --------------------------------- |
-| Front-end  | http://localhost:3000     | Interface React                   |
-| API        | http://localhost:3001/api | API REST NestJS                   |
-| Swagger    | http://localhost:3001/api | Documentação interativa           |
-| PostgreSQL | interno (rede Docker)     | Acessível apenas pelos containers |
+| Serviço    | URL local                 | URL de produção                        | Descrição                         |
+| ---------- | ------------------------- | -------------------------------------- | --------------------------------- |
+| Front-end  | http://localhost:3000     | https://lumi-front-end.vercel.app/     | Interface React                   |
+| API        | http://localhost:3001/api | https://lumi-api-ldtz.onrender.com/api | API REST NestJS                   |
+| Swagger    | http://localhost:3001/api | https://lumi-api-ldtz.onrender.com/api | Documentação interativa           |
+| PostgreSQL | interno (rede Docker)     | —                                      | Acessível apenas pelos containers |
 
 ---
 
