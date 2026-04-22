@@ -5,6 +5,30 @@ Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
 
 ---
 
+# Objetivo:
+
+## Desenvolver um código que seja capaz de:
+- Extrair os dados relevantes dessas faturas.
+- Organizar esses dados de maneira estruturada em um banco de dados PostgreSQL.
+- Apresentar esses dados em uma aplicação web, por meio de uma API.
+
+## Extração de Dados: Você deve desenvolver um extrator de dados para capturar os dados das faturas de energia elétrica fornecidas (anexo FATURAS) e extrair as informações relevantes. Estas incluem, mas não estão limitadas a:
+- “Nº DO CLIENTE”, por exemplo: 7894657391
+- “Mês de referência”, por exemplo: Referente a SET/2024
+- ‘Energia Elétrica’– Quantidade (kWh) e Valor (R$)
+- ‘Energia SCEEE s/ICMS’ – Quantidade (kWh) e Valor (R$)
+- ‘Energia Compensada GD I’ – Quantidade (kWh) e Valor (R$). **Esses dados estão na parte de "Itens da Fatura".
+- ‘Contrib Ilum Publica Municipal’ – Valor (R$), por exemplo: "Contrib llum Publica Municipal 47,57"
+
+## Variáveis de Interesse: abaixo estão elencadas as variáveis de interesse, algumas delas calculadas:
+
+- Consumo de Energia Elétrica (KWh): corresponde ao somatório das variáveis ‘Energia Elétrica kWh’ + ‘Energia SCEEE s/ICMS kWh’, por exemplo: Exemplo (Abril/24): Consumo de Energia Elétrica = 50 kWh + 476 kWh = 526 kWh;
+- Energia Compensada (kWh): corresponde à variável ‘Energia Compensada GD I (kWh)’;
+- Valor Total sem GD (R$): somatório dos valores faturados de ‘Energia Elétrica (R$)’ + ‘Energia SCEE s/ ICMS (R$)’ + ‘Contrib Ilum Publica Municipal (R$)’;
+- Economia GD (R$): corresponde à ‘Energia compensada GD I (R$)’.
+
+---
+
 ## Sumário
 
 1. [Visão Geral](#visão-geral)
