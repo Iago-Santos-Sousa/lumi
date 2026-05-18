@@ -1,4 +1,4 @@
-# Lumi — Plataforma de Gestão de Faturas de Energia
+# Lumy — Plataforma de Gestão de Faturas de Energia
 
 Aplicação full-stack para gerenciamento de faturas de energia elétrica (CEMIG).  
 Composta por uma API REST em **NestJS** e uma interface web em **React + Vite**.
